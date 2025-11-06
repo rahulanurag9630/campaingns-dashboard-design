@@ -1,24 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Campaign } from '@/lib/types';
-import { getCampaigns } from '@/lib/storage';
-
-export function CampaignTable() {
+import { apiService } from '@/lib/api/apiService';
+import { API_ENDPOINTS } from '@/lib/api/apiEndPoints';
+interface CampaignListResponse {
+  campaigns: Campaign[];
+}
+interface CreateCampaignModalProps {
+  open: boolean;
+}
+export function CampaignTable({ open }: CreateCampaignModalProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setCampaigns(getCampaigns());
-  }, []);
+    const fetchCampaigns = async () => {
+      try {
+        const data = await apiService<CampaignListResponse>('GET', API_ENDPOINTS.CAMPAIGNS.GET_ALL);
+        setCampaigns(data.campaigns);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCampaigns();
+  }, [open]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -33,10 +43,16 @@ export function CampaignTable() {
     }
   };
 
+  if (loading) {
+    return <div className="text-center p-6 text-gray-500">Loading campaigns...</div>;
+  }
+
   if (campaigns.length === 0) {
     return (
       <div className="bg-white rounded-lg border p-12 text-center">
-        <p className="text-gray-500">No campaigns yet. Create your first campaign to get started!</p>
+        <p className="text-gray-500">
+          No campaigns yet. Create your first campaign to get started!
+        </p>
       </div>
     );
   }
@@ -66,7 +82,9 @@ export function CampaignTable() {
               </TableCell>
               <TableCell>{campaign.sent}</TableCell>
               <TableCell>{campaign.replies}</TableCell>
-              <TableCell>{new Date(campaign.createdAt).toLocaleDateString()}</TableCell>
+              <TableCell>
+                {new Date(campaign.createdAt).toLocaleDateString()}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

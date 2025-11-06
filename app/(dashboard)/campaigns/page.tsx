@@ -25,7 +25,7 @@ export default function CampaignsPage() {
         </Button>
       </div>
 
-      <CampaignTable />
+      <CampaignTable open={isModalOpen} />
 
       <CreateCampaignModal
         open={isModalOpen}
